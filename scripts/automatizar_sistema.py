@@ -259,9 +259,46 @@ def main():
     
     # Verificar argumentos da linha de comando
     iniciar_dashboard = True
-    if len(sys.argv) > 1 and sys.argv[1] == "--sem-dashboard":
-        iniciar_dashboard = False
-        print("⚠️  Dashboard não será iniciado automaticamente")
+    usar_google_drive = False
+    
+    for arg in sys.argv[1:]:
+        if arg == "--sem-dashboard":
+            iniciar_dashboard = False
+            print("⚠️  Dashboard não será iniciado automaticamente")
+        elif arg == "--google-drive":
+            usar_google_drive = True
+            print("☁️  Modo Google Drive ativado")
+    
+    # Baixar arquivos do Google Drive se solicitado
+    if usar_google_drive:
+        try:
+            from google_drive_integration import GoogleDriveIntegration
+            from config_google_drive import URLS_ARQUIVOS_EXEMPLO
+            
+            print("📥 Baixando arquivos do Google Drive...")
+            gd = GoogleDriveIntegration()
+            
+            # Usar URLs de exemplo (usuário deve configurar)
+            if URLS_ARQUIVOS_EXEMPLO and len(URLS_ARQUIVOS_EXEMPLO) > 0:
+                # Filtrar URLs válidas (não exemplo)
+                urls_validas = [
+                    item for item in URLS_ARQUIVOS_EXEMPLO 
+                    if 'EXEMPLO_FILE_ID' not in item.get('url', '')
+                ]
+                
+                if urls_validas:
+                    sucessos = gd.baixar_arquivos_por_lista(urls_validas)
+                    print(f"✅ {sucessos} arquivos baixados do Google Drive")
+                else:
+                    print("⚠️  Configure as URLs dos arquivos em config_google_drive.py")
+                    print("📝 Veja as instruções no arquivo para configurar")
+            else:
+                print("⚠️  Nenhuma URL configurada em config_google_drive.py")
+                
+        except ImportError:
+            print("❌ Módulo google_drive_integration não encontrado")
+        except Exception as e:
+            print(f"❌ Erro ao baixar do Google Drive: {e}")
     
     # Executar automação
     automacao = AutomacaoSistema()
@@ -276,6 +313,13 @@ def main():
         if iniciar_dashboard:
             print("🌐 Dashboard disponível em: http://localhost:8501")
         print("📋 Execute 'python3 iniciar_dashboard.py' para acessar o dashboard")
+        
+        # Instruções para Google Drive
+        if usar_google_drive:
+            print("\n☁️  GOOGLE DRIVE:")
+            print("📝 Para próximas atualizações, adicione novos arquivos no Google Drive")
+            print("🔄 Execute: python3 automatizar_sistema.py --google-drive")
+        
         sys.exit(0)
 
 if __name__ == "__main__":
